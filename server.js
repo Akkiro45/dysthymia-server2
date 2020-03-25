@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
               resBody.status = 'ok';
               if(score.score) {
                 resBody.score = score.score;
-                resBody.time = new Date().getTime() + (1 * 60 * 1000) ;
+                resBody.time = new Date().getTime() + (7 * DAY) ;
                 resBody.startDay = score.weekDate.startDate;
                 resBody.endDay = score.weekDate.endDate;
               } else {
