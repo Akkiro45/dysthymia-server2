@@ -1,0 +1,27 @@
+{
+  "name": "ml-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "export NODE_ENV=development || SET \"NODE_ENV=development\" && nodemon server.js"
+  },
+  "engines": {
+    "node": "10.5.0"
+  },
+  "author": "Akkiro",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "helmet": "^3.21.3",
+    "lodash": "^4.17.15",
+    "moment": "^2.24.0",
+    "node-kmeans": "^1.1.9"
+  }
+}
