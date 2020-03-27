@@ -1,0 +1,11 @@
+{
+  "test": {
+    "PORT": 4001
+  },
+  "development": {
+    "PORT": 4001,
+    "CLIENT_ID": "212897048537-qd00qs32uehgssoai9qi294k4e5dhl17.apps.googleusercontent.com",
+    "CLIENT_SECRET": "Kx2CK9GnSwzr5CzQ2zPqy8zK",
+    "REFRESH_TOKEN": "1//04tbd5k7wAieoCgYIARAAGAQSNwF-L9IrEpHvpyE9nt5iJGvM5HekQ4N28VkVuyq1l_Uy3ArvI1137rtElY79K5qAFE4NArObnNE"
+  }
+}
