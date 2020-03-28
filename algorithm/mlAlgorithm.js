@@ -5,8 +5,6 @@ const algorithm = async (splitData, averageSplitData) => {
     const levelRangeWithLowHigh = findRange(centroids, averageSplitData);
     const weekDate = getWeek(splitData);
     const score = getScore(averageSplitData, levelRangeWithLowHigh);
-    // console.log(score);
-    // console.log(weekDate);
     return {
       score,
       weekDate
