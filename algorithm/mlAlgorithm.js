@@ -1,4 +1,4 @@
-const kmeans = require('node-kmeans');
+const kmeans = require('../kmeans/index');
 
 const algorithm = async (splitData, averageSplitData) => {
     const centroids = await dataSplittingForKmeans(splitData);
