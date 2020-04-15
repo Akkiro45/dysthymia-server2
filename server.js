@@ -57,7 +57,6 @@ app.get('/', (req, res) => {
       })
       .catch(e=> {
         console.log('error');
-        console.log(e);
         if(e.response) {
           error.msg = 'Not Found!';
           resBody.error = error;

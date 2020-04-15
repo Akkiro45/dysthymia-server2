@@ -17,7 +17,7 @@ module.exports = (userName, score, startDay, endDay) => {
 					<img src="https://drive.google.com/uc?id=1kvlkGXbsdeSjNmit2NFxm-RPiseO4kcQ" style="max-width: 80%;max-height: 100%;">
 				</div>
 				<div class="centering" style="display: inline-block; vertical-align: middle;">
-					<div class="heading" style="color: #004afd; font-size: 30px; font-family: 'Noto Serif', serif; font-weight: bold; margin-bottom: 2%; margin-left: 5%;">Dysthymia</div>
+					<div class="heading" style="color: #004afd; font-size: 25px; font-family: 'Noto Serif', serif; font-weight: bold; margin-bottom: 2%; margin-left: 5%;">Dysthymia</div>
 					<div class="desc" style="font-size: 15px; font-family: 'Noto Serif', serif; margin-top: 2%; margin-left: 5%;">Make your life better!</div>
 				</div>
 			</div>

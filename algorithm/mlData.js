@@ -486,14 +486,7 @@ const averageSeperateData = (data) => {
     let seperatedData = {};
     Object.keys(data).forEach((e, index) => {
         if(e != 'activities' && e != 'lightSensor') {
-            if(e == 'screenOnTime') {
-                seperatedData.screenOnTime = averageRemainingData(data[e]);
-                for(let i = 0; i < 2; i++) {
-                    seperatedData.screenOnTime[i] = Math.trunc(seperatedData.screenOnTime[i] / 60000);
-                }
-            } else {
-                seperatedData[e] = averageRemainingData(data[e]);
-            }
+            seperatedData[e] = averageRemainingData(data[e]);
         }
     })
     return seperatedData;
