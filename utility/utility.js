@@ -12,11 +12,11 @@ const checkDataAvailability = (data) => {
         const end = moment(data.unlocks[data.unlocks.length - 1].date, 'DD/MM/YY').valueOf();
         if(start && end) {
           const days = Math.trunc((end - start) / DAY);
-          if(days >= 14 && data.unlocks.length >= 14) {
+          if(days >= 13 && data.unlocks.length >= 14) {
             return { available: true };
           } else {
-            if(days < 14) {
-              return { available: false, initialTime: new Date().getTime() + (days * DAY) };
+            if(days < 13) {
+              return { available: false, initialTime: new Date().getTime() + (Math.abs(14 - days) * DAY) };
             } else {
               return { available: false, initialTime: new Date().getTime() + (7 * DAY) };
             }
