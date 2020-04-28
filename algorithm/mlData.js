@@ -9,11 +9,12 @@ const rawData = (res) => {
     callLogsAddedData = callLogsDataValue(notificationFiltered);
     cleanData = solveMissingDateValue(notificationFiltered);
     sleepAddedCleanData = sleepDataValue(cleanData);
-    averageSplitData = averageSeperateData(sleepAddedCleanData);
-    splitData = seperateData(sleepAddedCleanData);
-    const dataSize = sleepAddedCleanData.unlocks.length;
+    modifyDataNAtoZero = modifyData(sleepAddedCleanData);
+    averageSplitData = averageSeperateData(modifyDataNAtoZero);
+    splitData = seperateData(modifyDataNAtoZero);
+    const dataSize = modifyDataNAtoZero.unlocks.length;
     if(dataSize >= 14) {
-        return mlAlgorithm.algorithm(splitData, averageSplitData);
+        mlAlgorithm.algorithm(splitData, averageSplitData);
     } else {
         return { dataSize };
     }
@@ -127,6 +128,7 @@ const lightActivityFilteredData = (data) => {
     let duplicateActivityValue = { ...activityValue };
     let tryLightSensor = { ...activityValue }
     let averageLightSensorValue = { ...activityValue };
+    let averageActivityValue = { ...duplicateActivityValue };
 
     Object.keys(data).forEach((e, index) => {
         if(e == 'lightSensor') {
@@ -135,17 +137,23 @@ const lightActivityFilteredData = (data) => {
             activitiesData = data[e];
         }
     })
+
     let lengthLightSensorData = Object.keys(lightSensorData).length;
+    let noStatsCount = 0;
 
     // adding missing values in lightNormalValue
     for(let i=0; i<lengthLightSensorData; i++) {
-        Object.entries(lightSensorData[i].stats).forEach((e, index) => {
-            if(e[0] in lightNormalValue) {
-                lightNormalValue[e[0]] = e[1]
-            }
-        });
-        lightSensorData[i].stats = lightNormalValue;
-        lightNormalValue = { ...duplicateLightNormalValue };
+        if(lightSensorData[i].stats) {
+            Object.entries(lightSensorData[i].stats).forEach((e, index) => {
+                if(e[0] in lightNormalValue) {
+                    lightNormalValue[e[0]] = e[1]
+                }
+            });
+            lightSensorData[i].stats = lightNormalValue;
+            lightNormalValue = { ...duplicateLightNormalValue };
+        } else {
+            noStatsCount++;
+        }
     }
 
     // Light sensor value making one hour from half hours
@@ -153,62 +161,103 @@ const lightActivityFilteredData = (data) => {
     let tempLightValue = 0;
     let dataIndex = 0;
     for(let i=0; i<lengthLightSensorData; i++) {
-        Object.entries(lightSensorData[i].stats).forEach((e, index) => {
-            tempLightValue += e[1];
-            j++;
-            if(j == 2) {
-                tempLightValue = tempLightValue / 2;
-                Object.keys(tryLightSensor).forEach((el, index2) => {
-                    if(index2 == dataIndex) {
-                        tryLightSensor[el] =  Math.trunc(tempLightValue);
-                        averageLightSensorValue[el] += Math.trunc(tempLightValue);
-                    }
-                })
-                j=0;
-                tempLightValue = 0;
-                dataIndex++;
-            }
-        });
-        dataIndex = 0;
-        lightSensorData[i].stats = tryLightSensor;
-        tryLightSensor = { ...duplicateActivityValue };
+        if(lightSensorData[i].stats) {
+            Object.entries(lightSensorData[i].stats).forEach((e, index) => {
+                tempLightValue += e[1];
+                j++;
+                if(j == 2) {
+                    tempLightValue = tempLightValue / 2;
+                    Object.keys(tryLightSensor).forEach((el, index2) => {
+                        if(index2 == dataIndex) {
+                            tryLightSensor[el] =  Math.trunc(tempLightValue);
+                            averageLightSensorValue[el] += Math.trunc(tempLightValue);
+                        }
+                    })
+                    j=0;
+                    tempLightValue = 0;
+                    dataIndex++;
+                }
+            });
+            dataIndex = 0;
+            lightSensorData[i].stats = tryLightSensor;
+            tryLightSensor = { ...duplicateActivityValue };
+        }
     }
 
     // average light sensor value
     Object.keys(averageLightSensorValue).forEach((el, index2) => {
-        averageLightSensorValue[el] = Math.trunc(averageLightSensorValue[el] / lengthLightSensorData);
+        averageLightSensorValue[el] = Math.trunc(averageLightSensorValue[el] / lengthLightSensorData-noStatsCount);
     })
+
+    // Light Sensor Data with no Stats will be replaced with averageLightSensorValue
+    for(let i=0; i<lengthLightSensorData; i++) {
+        if(!lightSensorData[i].stats) {
+            lightSensorData[i].stats = averageLightSensorValue;
+        }
+    }
 
     // activity mapping with 0 and 1 and also calculating overall value
     let temp = 0;
+    let noActivityStatsCount = 0;
     let tempDict;
     let lengthActivitiesData = Object.keys(activitiesData).length;
-    for(let i=0; i<lengthActivitiesData; i++) {
-        let overallValue = 0;
-        Object.entries(activitiesData[i].stats).forEach((e, index) => {
-            Object.entries(e[1]).forEach((ele, index2) => {
-                if(ele[0] != 'STILL' && ele[0] != 'UNKNOWN') {
-                    temp = 1;
-                }
-            });
-            if(temp == 1) {
-                activityValue[e[0]] = 1;
-                overallValue += 1;
-            }
-            temp = 0;
-        });
-        tempDict = {};
-        tempDict.date = activitiesData[i].date;
-        tempDict.value = Math.floor((overallValue / 24) * 1000) / 1000;;
-        activitiesOverallData.push(tempDict);
 
-        activitiesData[i].stats = activityValue;
-        activityValue = { ...duplicateActivityValue };
+    for(let i=0; i<lengthActivitiesData; i++) {
+        if(activitiesData[i].stats) {
+            let overallValue = 0;
+            Object.entries(activitiesData[i].stats).forEach((e, index) => {
+                Object.entries(e[1]).forEach((ele, index2) => {
+                    if(ele[0] != 'STILL' && ele[0] != 'UNKNOWN') {
+                        temp = 1;
+                    }
+                });
+                if(temp == 1) {
+                    activityValue[e[0]] = 1;
+                    overallValue += 1;
+                }
+                temp = 0;
+            });
+            tempDict = {};
+            tempDict.date = activitiesData[i].date;
+            tempDict.value = Math.floor((overallValue / 24) * 1000) / 1000;
+            activitiesOverallData.push(tempDict);
+
+            activitiesData[i].stats = activityValue;
+            activityValue = { ...duplicateActivityValue };
+        } else {
+            noActivityStatsCount++;
+        }
     }
+
+    // Average Activity Value
+    Object.keys(activitiesData).forEach((e, index) => {
+        if(activitiesData[e].stats) {
+            Object.entries(activitiesData[e].stats).forEach((e1, index) => {
+                if(e1[0] in averageActivityValue) {
+                    averageActivityValue[e1[0]] += e1[1];
+                }
+            })
+        }
+    })
+
+    Object.keys(averageActivityValue).forEach((e, index) => {
+        let tempAverageData = (lengthActivitiesData - noActivityStatsCount) - averageActivityValue[e];
+        if(tempAverageData >= averageActivityValue[e]) {
+            averageActivityValue[e] = 0;
+        } else {
+            averageActivityValue[e] = 1;
+        }
+    })
+
+    for(let i=0; i<lengthActivitiesData; i++) {
+        if(!activitiesData[i].stats) {
+            activitiesData[i].stats = averageActivityValue;
+        }
+    }
+
     data.lightSensor = lightSensorData;
     data.activities = activitiesData;
     data.activitiesOverallData = activitiesOverallData;
-
     return data;
 }
 
@@ -232,46 +281,49 @@ const usageFilteredData = (alldata) => {
     let temp;
 
     Object.keys(data).forEach((e, index) => {
-        Object.entries(data[e].stats).forEach((e1, index1) => {
-            let j = 0;
-            let appToCheck = e1[0];
+        if(data[e].stats) {
+            Object.entries(data[e].stats).forEach((e1, index1) => {
+                let j = 0;
+                let appToCheck = e1[0];
 
-            Object.keys(stats).forEach((e2, index2) => {
-                for(let i=0; i<stats[e2].length; i++) {
-                    let re = new RegExp(stats[e2][i], 'i');
-                    let flagRe = re.test(appToCheck);
-                    if(flagRe) {
-                        j = 1;
-                        statsValue[index2] += e1[1];
+                Object.keys(stats).forEach((e2, index2) => {
+                    for(let i=0; i<stats[e2].length; i++) {
+                        let re = new RegExp(stats[e2][i], 'i');
+                        let flagRe = re.test(appToCheck);
+                        if(flagRe) {
+                            j = 1;
+                            statsValue[index2] += e1[1];
+                        }
                     }
+                })
+                if(j == 0) {
+                    statsValue[4] += e1[1];
                 }
             })
-            if(j == 0) {
-                statsValue[4] += e1[1];
-            }
-        })
 
-        let usageValue = 0;
-        for(let i=0; i<statsValue.length; i++) {
-            if(i == 0) {
-                statsValue[i] = statsValue[i] * 0.8;
-            } else if(i == 1) {
-                statsValue[i] = statsValue[i] * 0.3;
-            } else if(i == 2) {
-                statsValue[i] = statsValue[i] * 0.4;
-            } else if(i == 3){
-                statsValue[i] = statsValue[i] * 0.6;
-            } else if(i == 4){
-                statsValue[i] = statsValue[i] * 0.5;
+            let usageValue = 0;
+            for(let i=0; i<statsValue.length; i++) {
+                if(i == 0) {
+                    statsValue[i] = statsValue[i] * 0.35;
+                } else if(i == 1) {
+                    statsValue[i] = statsValue[i] * 0.05;
+                } else if(i == 2) {
+                    statsValue[i] = statsValue[i] * 0.15;
+                } else if(i == 3){
+                    statsValue[i] = statsValue[i] * 0.25;
+                } else if(i == 4){
+                    statsValue[i] = statsValue[i] * 0.2;
+                }
+                usageValue += statsValue[i];
             }
-            usageValue += statsValue[i];
+            temp = {}
+            temp.date = data[e].date;
+            temp.usage = Math.trunc(usageValue);
+            usageStatsData.push(temp);
+            statsValue = [ ...duplicateStatsValue ]
         }
-        temp = {}
-        temp.date = data[e].date;
-        temp.usage = Math.trunc(usageValue);
-        usageStatsData.push(temp);
-        statsValue = [ ...duplicateStatsValue ]
     })
+
     alldata.usageStats = usageStatsData;
     return alldata;
 }
@@ -282,9 +334,9 @@ const notificationFilteredData = (alldata) => {
     let notificationValue = [];
     let stats = {
         socialMedia: ['facebook', 'twitter', 'youtube', 'instagram', 'whatsapp', 'snapchat', 'telegram', 'linkedin'],
-        videoPlayer: ['player', 'vlc', 'hotstar'],
+        videoPlayer: ['player', 'vlc', 'hotstar', 'netflix'],
         browser: ['firefox', 'chrome', 'opera', 'browser'],
-        games: ['pubg', 'bombsquad', 'pokemon', 'ludo', 'gta','call of duty', 'candy crush', 'clash of clans', 'clash royale', 'subway surfers', 'free fire', 'temple run']
+        games: ['pubg', 'uno', 'bombsquad', 'pokemon', 'ludo', 'gta','call of duty', 'candy crush', 'clash of clans', 'clash royale', 'subway surfers', 'free fire', 'temple run']
     }
     let statsValue = [
         socialMedia = 0,
@@ -345,15 +397,15 @@ const notificationFilteredData = (alldata) => {
             let individualUsageValue = 0;
             for(let i=0; i<statsValue.length; i++) {
                 if(i == 0) {
-                    statsValue[i] = statsValue[i] * 0.8;
+                    statsValue[i] = statsValue[i] * 0.35;
                 } else if(i == 1) {
-                    statsValue[i] = statsValue[i] * 0.3;
+                    statsValue[i] = statsValue[i] * 0.05;
                 } else if(i == 2) {
-                    statsValue[i] = statsValue[i] * 0.4;
+                    statsValue[i] = statsValue[i] * 0.15;
                 } else if(i == 3){
-                    statsValue[i] = statsValue[i] * 0.6;
+                    statsValue[i] = statsValue[i] * 0.25;
                 } else if(i == 4){
-                    statsValue[i] = statsValue[i] * 0.5;
+                    statsValue[i] = statsValue[i] * 0.2;
                 }
                 individualUsageValue += statsValue[i];
             }
@@ -390,15 +442,15 @@ const notificationFilteredData = (alldata) => {
         let usageValue = 0;
         for(let i=0; i<statsValue.length; i++) {
             if(i == 0) {
-                statsValue[i] = statsValue[i] * 0.8;
+                statsValue[i] = statsValue[i] * 0.35;
             } else if(i == 1) {
-                statsValue[i] = statsValue[i] * 0.3;
+                statsValue[i] = statsValue[i] * 0.05;
             } else if(i == 2) {
-                statsValue[i] = statsValue[i] * 0.4;
+                statsValue[i] = statsValue[i] * 0.15;
             } else if(i == 3){
-                statsValue[i] = statsValue[i] * 0.6;
+                statsValue[i] = statsValue[i] * 0.25;
             } else if(i == 4){
-                statsValue[i] = statsValue[i] * 0.5;
+                statsValue[i] = statsValue[i] * 0.2;
             }
             usageValue += statsValue[i];
         }
@@ -427,16 +479,16 @@ const notificationFilteredData = (alldata) => {
         temp = {};
         Object.entries(notificationsData[e].stats).forEach((e1, index1) => {
             if(e1[0] == 'count') {
-                e1[1] = e1[1] * 0.2;
+                e1[1] = e1[1] * 0.175;
                 overallValue += e1[1];
             } else if(e1[0] == 'apps') {
-                e1[1] = e1[1] * 0.2;
+                e1[1] = e1[1] * 0.175;
                 overallValue += e1[1];
             } else if(e1[0] == 'clicked') {
-                e1[1] = e1[1] * 0.6;
+                e1[1] = e1[1] * 0.25;
                 overallValue += e1[1];
             } else if(e1[0] == 'clickedCount') {
-                e1[1] = e1[1] * 0.8;
+                e1[1] = e1[1] * 0.4;
                 overallValue += e1[1];
             }
         })
@@ -468,9 +520,9 @@ const callLogsDataValue = (alldata) => {
                 missedCallCount += e1[1];
             }
         })
-        uniqueCallCount = uniqueCallCount * 0.4;
-        totalDuration = totalDuration * 0.8;
-        missedCallCount = missedCallCount * 0.6;
+        uniqueCallCount = uniqueCallCount * 0.15;
+        totalDuration = totalDuration * 0.5;
+        missedCallCount = missedCallCount * 0.35;
         overallValue = uniqueCallCount + totalDuration + missedCallCount;
 
         temp = {}
@@ -765,6 +817,7 @@ const activitiesAverageData = (data) => {
             }
         })
     })
+
     Object.keys(averageActivityValue).forEach((e, index) => {
         let tempAverageData = 29 - averageActivityValue[e];
         if(tempAverageData >= averageActivityValue[e]) {
@@ -908,6 +961,25 @@ const sleepDataValue = (data) => {
         activityValue = { ...duplicateActivityValue };
     }
     data.sleepHours = sleepAddedData;
+    return data;
+}
+
+const modifyData = (data) => {
+    Object.keys(data).forEach((e1, index1) => {
+        if(e1 != 'activities' && e1 != 'lightSensor') {
+            data[e1] = changeData(data[e1]);
+        }
+    })
+    return data;
+}
+
+const changeData = (data) => {
+    let arrayLength = Object.keys(data).length;
+    for(let i=0; i<arrayLength; i++) {
+        if(isNaN(data[i].value)) {
+            data[i].value = 0;
+        }
+    }
     return data;
 }
 
