@@ -14,7 +14,7 @@ const rawData = (res) => {
     splitData = seperateData(modifyDataNAtoZero);
     const dataSize = modifyDataNAtoZero.unlocks.length;
     if(dataSize >= 14) {
-        mlAlgorithm.algorithm(splitData, averageSplitData);
+        return mlAlgorithm.algorithm(splitData, averageSplitData);
     } else {
         return { dataSize };
     }
