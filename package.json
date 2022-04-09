@@ -22,7 +22,7 @@
     "googleapis": "^41.0.0",
     "helmet": "^3.21.3",
     "lodash": "^4.17.15",
-    "moment": "^2.24.0",
+    "moment": "^2.29.2",
     "nodemailer": "^6.2.1",
     "underscore": "^1.9.1"
   }
